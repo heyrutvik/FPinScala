@@ -1,5 +1,8 @@
 package fpinscala.datastructures
 
+import scala.annotation.tailrec
+import scala.util.Try
+
 sealed trait List[+A] // `List` data type, parameterized on a type, `A`
 case object Nil extends List[Nothing] // A `List` data constructor representing the empty list
 /* Another data constructor, representing nonempty lists. Note that `tail` is another `List[A]`,
@@ -69,7 +72,7 @@ object List { // `List` companion object. Contains functions for creating and wo
     else drop(tail(l), n - 1)
   }
 
-  @annotation.tailrec
+  @tailrec
   def dropWhile[A](l: List[A], f: A => Boolean): List[A] = l match {
     case Cons(x, xs) if f(x) => dropWhile(xs, f)
     case _ => l
@@ -83,7 +86,7 @@ object List { // `List` companion object. Contains functions for creating and wo
 
   def length[A](l: List[A]): Int = foldRight(l, 0)((_, z) => z + 1)
 
-  @annotation.tailrec
+  @tailrec
   def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = l match {
     case Nil => z
     case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
@@ -98,7 +101,7 @@ object List { // `List` companion object. Contains functions for creating and wo
   def reverse[A](l: List[A]): List[A] = foldLeft(l, Nil:List[A])((acc, x) => Cons(x, acc))
 
   def reverse1[A](l: List[A]): List[A] = {
-    @annotation.tailrec
+    @tailrec
     def go[A](l: List[A], acc: List[A]): List[A] = l match {
       case Nil => acc
       case Cons(x, xs) => go(xs, Cons(x, acc))
@@ -151,4 +154,70 @@ object List { // `List` companion object. Contains functions for creating and wo
   }
 
   def e3_22(as: List[Int], bs: List[Int]): List[Int] = map(zip(as, bs)){case (a, b) => a + b}
+
+  def zipWith[A, B, C](as: List[A], bs: List[B])(f: ((A, B)) => C): List[C] = map(zip(as, bs))(f)
+
+  def null_?[A](as: List[A]): Boolean = Try(head(as)).fold(_ => true, _ => false)
+
+  def take[A](as: List[A], n: Int): List[A] = {
+    if (n <= 0 || null_?(as)) Nil
+    else Cons(head(as), take(tail(as), n-1))
+  }
+
+  def take1[A](as: List[A], n: Int): List[A] = {
+    @tailrec
+    def go(as: List[A], n: Int, acc: List[A]): List[A] = as match {
+      case Nil => acc
+      case Cons(_, _) if n <= 0 => acc
+      case Cons(x, xs) => go(xs, n-1, Cons(x, acc))
+    }
+    reverse(go(as, n, Nil))
+  }
+
+  def takeWhile[A](as: List[A], p: A => Boolean): List[A] = as match {
+    case Nil => Nil
+    case Cons(x, xs) => if (p(x)) Cons(x, takeWhile(xs, p)) else Nil
+  }
+
+  def forall[A](as: List[A], p: A => Boolean): Boolean = foldLeft(map(as)(p), true)((z, a) => z && a)
+
+  def exists[A](as: List[A], p: A => Boolean): Boolean = foldLeft(map(as)(p), false)((z, a) => z || a)
+
+  // `n` number of element, `z` initial element, `f` to generate next element from previous
+  def fill[A](n: Int, z: A)(f: A => A): List[A] = {
+    @tailrec
+    def go(n: Int, za: A, acc: List[A]): List[A] = {
+      if (n <= 0) acc
+      else go(n-1, f(za), Cons(f(za), acc))
+    }
+    reverse(go(n-1, z, Cons(z, Nil)))
+  }
+
+  def succ[A](as: List[A]): List[List[A]] = {
+    @tailrec
+    def go(as: List[A], n: Int, acc: List[List[A]]): List[List[A]] = {
+      if (n <= 0) Cons(Nil, acc)
+      else go(as, n - 1, Cons(take(as, n), acc))
+    }
+    go(as, length(as), Nil)
+  }
+
+  def succ1[A](as: List[A]): List[List[A]] = map(fill(length(as) + 1, 0)(_ + 1))(n => take(as, n))
+
+  def scanLeft[A,B](l: List[A], z: B)(f: (B, A) => B): List[B] = map(succ1(l))(s => foldLeft(s, z)(f))
+
+  def scanRight[A,B](l: List[A], z: B)(f: (A, B) => B): List[B] = map(succ1(l))(s => foldRight(s, z)(f))
+
+  def group[A](as: List[A], n: Int): List[List[A]] = {
+    @tailrec
+    def go(as: List[A], i: Int, acc: List[List[A]]): List[List[A]] = {
+      if (i <= 0 || null_?(as)) acc
+      else go(tail(as), i-1, Cons(take(as, n), acc))
+    }
+    reverse(go(as, length(as)-n+1, Nil))
+  }
+
+  def contains[A](as: List[A], a: A): Boolean = exists[A](as, _ == a)
+
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = contains(group(sup, length(sub)), sub)
 }
