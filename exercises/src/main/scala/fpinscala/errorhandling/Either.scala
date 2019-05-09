@@ -52,7 +52,18 @@ object Either {
   def traverse1[E,A,B](es: List[A])(f: A => Either[E, B]): Either[E, List[B]] = {
     def go(es: List[A], acc: Either[E, List[B]]): Either[E, List[B]] = es match {
       case Nil => acc
-      case x :: xs => acc.flatMap(_ => f(x).flatMap(fx => go(xs, acc).map(fx :: _)))
+      case x :: xs => f(x).flatMap(fx => go(xs, acc).map(fx :: _))
+    }
+    go(es, Right(Nil))
+  }
+
+  def traverse2[E,A,B](es: List[A])(f: A => Either[E, B]): Either[E, List[B]] = {
+    def go(es: List[A], acc: Either[E, List[B]]): Either[E, List[B]] = es match {
+      case Nil => acc
+      case x :: xs => for {
+        fx <- f(x)
+        as <- go(xs, acc)
+      } yield (fx :: as)
     }
     go(es, Right(Nil))
   }

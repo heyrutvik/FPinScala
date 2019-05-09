@@ -75,7 +75,7 @@ object Option {
   def sequence1[A](a: List[Option[A]]): Option[List[A]] = {
     def go(a: List[Option[A]], acc: Option[List[A]]): Option[List[A]] = a match {
       case Nil => acc
-      case x :: xs => acc.flatMap(_ => x.flatMap(a => go(xs, acc).map(a :: _)))
+      case x :: xs => x.flatMap(a => go(xs, acc).map(a :: _))
     }
     go(a, Some(Nil))
   }
