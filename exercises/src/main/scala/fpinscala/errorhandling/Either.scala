@@ -1,6 +1,5 @@
 package fpinscala.errorhandling
 
-
 import scala.{Option => _, Either => _, Left => _, Right => _, _} // hide std library `Option` and `Either`, since we are writing our own in this chapter
 
 sealed trait Either[+E,+A] {
@@ -19,7 +18,8 @@ sealed trait Either[+E,+A] {
    case Right(a) => Right(a)
  }
 
- def map2[EE >: E, B, C](b: Either[EE, B])(f: (A, B) => C): Either[EE, C] = this.flatMap(a => b.map(b => f(a, b)))
+ def map2[EE >: E, B, C](b: Either[EE, B])(f: (A, B) => C): Either[EE, C] = 
+   this.flatMap(a => b.map(b => f(a, b)))
 }
 case class Left[+E](get: E) extends Either[E,Nothing]
 case class Right[+A](get: A) extends Either[Nothing,A]
