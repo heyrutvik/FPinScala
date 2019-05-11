@@ -19,4 +19,17 @@ object Person {
 
   def mkPerson(name: String, age: Int): Either[String, Person] = 
     mkName(name).map2(mkAge(age))(Person(_, _))
+
+  def mkName1(name: String): Check[String, Name] = {
+    if (name == "" || name == null) Fail(List("Name is empty"))
+    else Pass(new Name(name))
+  }
+
+  def mkAge1(age: Int): Check[String, Age] = {
+    if (age < 0) Fail(List("Age is out of range"))
+    else Pass(new Age(age))
+  }
+
+  def mkPerson1(name: String, age: Int): Check[String, Person] = 
+    mkName1(name).map2(mkAge1(age))(Person(_, _))
 }
