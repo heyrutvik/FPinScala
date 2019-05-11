@@ -18,7 +18,7 @@ sealed trait Check[+E, +A] {
   def map2[EE >: E, B, C](that: Check[EE, B])(f: (A, B) => C): Check[EE, C] = {
     this.apply(that.map(b => f(_, b)))
   }
-  // TODO: Should be returning both error in case of both are Fail?
+  // TODO: Should it be returning both error in case of both are Fail?
   def orElse[EE >: E, AA >: A](default: => Check[EE, AA]): Check[EE, AA] = this match {
     case Fail(vs) => default
     case Pass(v) => Pass(v)
